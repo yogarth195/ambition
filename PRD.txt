@@ -1,0 +1,64 @@
+1. production : design() short() short unit() total() date(entry date, can or cannot belong to the entry of the prodcution) month_belongs(source of truth)
+
+
+2. tirmmer : item, value, entry date, for range(or day, or month, or year) and its actual value, think of something that that we can put that into range, MONTH BELOGNS TO. 
+after: Keep this only for month belong, and enable the past months' differnce from the backend, trigger(debounce) on the mnoth change, in real time tell me what was the last month's leftovers(that is the production - trimmer)
+
+
+3. buffing: same as trimmer. (this will have the balance of the last month)
+
+
+4. Repair,. item, value, entry date, for month. 
+on the dashboar it should look like: Repair/(Total_Production of that month) , think if you can actually find this for a day, or a week. 
+
+
+5. Packed: item, value, entryDate , month belongs. 
+
+
+6. Quantity -> Quantity Purchased. 
+i have made the chagnes, 
+item, value, entry date, month_belongs
+
+7. Sales: remove for now, but can be added in future. 
+
+
+8. Labour: amount, date, month_belongs
+
+
+9. Misc: amount, date, month_belongs
+
+// architecture updates: 
+-- at most of the instances the date is the entryDate, and other explicit dates are most of the times Month belongs
+-- we can only input the values of a table(trimmer, buffing, repair, and other) for a month(say march, or jan 2026) if the values of the prior month is present(february, dec 2025)
+
+
+
+new modal box: 
+Costing(for a month): formula  = (labour ex + misc ex) / total production
+for example: lab ex: 100, misc ex: 100(total = 200), Total_Production = 200
+this costing shall give us a rate, nothing else. 
+
+
+
+for each month of the related tables, 
+the prior month's value and the current month's last phase value should exist, else no input. 
+
+
+
+
+
+
+
+
+
+
+
+--- understanding balance ---
+
+
+
+phase1: production : 1000
+
+phase2: trimmer : 900(out of the 1000 production), remaning: 100(here) This will move to the next month's trimmer(+100, as fucking itis)
+
+phase3: buffing : 850(out of the 900 trimmer), remaning: 

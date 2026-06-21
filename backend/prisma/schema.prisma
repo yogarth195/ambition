@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(ADMIN)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Production {
+  id           String   @id @default(uuid())
+  design       String
+  shorts       Int
+  shortUnit    Int
+  entryDate    DateTime
+  monthBelongs String
+  total        Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+
+model Trimmer {
+  id           String   @id @default(uuid())
+  item         String
+  value        Int
+  lastMonthRemaining Int?
+  finalValue   Int
+  forRange     String?
+  monthBelongs String
+  entryDate    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+
+model Buffing {
+  id           String   @id @default(uuid())
+  item         String
+  value        Int
+  lastMonthRemaining  Int?
+  finalValue   Int
+  forRange     String?
+  monthBelongs String
+  entryDate    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+
+model Repair {
+  id           String   @id @default(uuid())
+  item         String
+  value        Int
+  monthBelongs String
+  entryDate    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+model Packed {
+  id           String   @id @default(uuid())
+  item         String
+  value        Int
+  entryDate    DateTime
+  monthBelongs String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Quantity { 
+  id           String   @id @default(uuid())
+  item         String    
+  value        Int
+  entryDate    DateTime
+  monthBelongs String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+
+model Sale { 
+  id        String   @id @default(uuid())
+  item      String   
+  value     Int
+  entryDate DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
+model Labour {
+  id           String   @id @default(uuid())
+  amount       Int
+  entryDate    DateTime
+  monthBelongs String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("labour_expense")
+}
+
+
+model Misc {
+  id           String   @id  @default(uuid())
+  amount       Int
+  entryDate    DateTime
+  monthBelongs String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("misc_expense")
+}
