@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { buffingController } from '../controllers/buffing.controller';
+import { createBuffingSchema } from '../schemas/buffing.schema';
+import { buffingService } from '../services/buffing.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/',     buffingController.create);
-router.get('/',      buffingController.getAll);
-router.get('/:id',   buffingController.getById);
-router.put('/:id',   buffingController.update);
-router.delete('/:id', buffingController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      buffingService,
+  createSchema: createBuffingSchema,
+});

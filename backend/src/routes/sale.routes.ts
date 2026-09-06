@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { saleController } from '../controllers/sale.controller';
+import { createSaleSchema } from '../schemas/sale.schema';
+import { saleService } from '../services/sale.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/', saleController.create);
-router.get('/', saleController.getAll);
-router.get('/:id', saleController.getById);
-router.put('/:id', saleController.update);
-router.delete('/:id', saleController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      saleService,
+  createSchema: createSaleSchema,
+});

@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { labourController } from '../controllers/labour.controller';
+import { createLabourSchema } from '../schemas/labour.schema';
+import { labourService } from '../services/labour.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/',     labourController.create);
-router.get('/',      labourController.getAll);
-router.get('/:id',   labourController.getById);
-router.put('/:id',   labourController.update);
-router.delete('/:id', labourController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      labourService,
+  createSchema: createLabourSchema,
+});

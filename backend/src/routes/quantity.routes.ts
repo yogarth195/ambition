@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { quantityController } from '../controllers/quantity.controller';
+import { createQuantitySchema } from '../schemas/quantity.schema';
+import { quantityService } from '../services/quantity.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/',     quantityController.create);
-router.get('/',      quantityController.getAll);
-router.get('/:id',   quantityController.getById);
-router.put('/:id',   quantityController.update);
-router.delete('/:id', quantityController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      quantityService,
+  createSchema: createQuantitySchema,
+});

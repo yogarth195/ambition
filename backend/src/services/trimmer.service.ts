@@ -1,32 +1,21 @@
-import prisma from '../prisma/client';
+import { Prisma, Trimmer } from '@prisma/client';
+import { trimmerRepository } from '../repositories/trimmer.repository';
 import { CreateTrimmerInput } from '../schemas/trimmer.schema';
-import { buildQueryArgs, QueryParams } from '../lib/queryHelpers';
+import { createCrudService } from './base.service';
 
-export class TrimmerService {
-  async create(data: CreateTrimmerInput) {
-    return prisma.trimmer.create({
-      data: {
-        ...data,
-        finalValue: data.value + (data.lastMonthRemaining ?? 0),
-      },
+const base = createCrudService<Trimmer, Prisma.TrimmerUncheckedCreateInput>(
+  trimmerRepository,
+  'Trimmer',
+);
+
+export const trimmerService = {
+  ...base,
+
+  /** finalValue is derived, never accepted from the client. */
+  create(data: CreateTrimmerInput) {
+    return base.create({
+      ...data,
+      finalValue: data.value + (data.lastMonthRemaining ?? 0),
     });
-  }
-
-  async getAll(params: QueryParams = {}) {
-    return prisma.trimmer.findMany(buildQueryArgs(params));
-  }
-
-  async getById(id: string) {
-    return prisma.trimmer.findUnique({ where: { id } });
-  }
-
-  async update(id: string, data: any) {
-    return prisma.trimmer.update({ where: { id }, data });
-  }
-
-  async delete(id: string) {
-    return prisma.trimmer.delete({ where: { id } });
-  }
-}
-
-export const trimmerService = new TrimmerService();
+  },
+};

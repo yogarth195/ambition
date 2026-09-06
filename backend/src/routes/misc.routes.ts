@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { miscController } from '../controllers/misc.controller';
+import { createMiscSchema } from '../schemas/misc.schema';
+import { miscService } from '../services/misc.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/',     miscController.create);
-router.get('/',      miscController.getAll);
-router.get('/:id',   miscController.getById);
-router.put('/:id',   miscController.update);
-router.delete('/:id', miscController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      miscService,
+  createSchema: createMiscSchema,
+});

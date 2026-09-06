@@ -1,49 +1,49 @@
+import { unprocessable } from './appError';
 
-type MonthModel = {
-    findFirst: (args?: any) => Promise<any>;
-};
+/**
+ * The slice of a repository these guards need. Keeping it structural means the
+ * service layer can pass any domain repository without importing Prisma.
+ */
+export interface MonthAwareRepository {
+  hasAny(): Promise<boolean>;
+  existsForMonth(month: string): Promise<boolean>;
+}
 
 export function prevMonth(monthBelongs: string): string {
-    const [y, m] = monthBelongs.split('-').map(Number);
-    const d = new Date(y, m - 2);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const [y, m] = monthBelongs.split('-').map(Number);
+  const d = new Date(y, m - 2);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export function nextMonth(monthBelongs: string): string {
-    const [y, m] = monthBelongs.split('-').map(Number);
-    const d = new Date(y, m);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  const [y, m] = monthBelongs.split('-').map(Number);
+  const d = new Date(y, m);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export async function requireMonthExists(
-    model: MonthModel,
-    month: string,
-    label: string,
+  repository: MonthAwareRepository,
+  month: string,
+  label: string,
 ): Promise<void> {
-    const anyRecord = await model.findFirst();
-    if (!anyRecord) return; // bootstrap: empty table, first entry is always free
+  // bootstrap: empty table, first entry is always free
+  if (!(await repository.hasAny())) return;
 
-    const exists = await model.findFirst({ where: { monthBelongs: month } });
-    if (!exists) {
-        const err: any = new Error(
-            `No ${label} entries found for ${month}. Add ${label} data for ${month} first.`
-        );
-        err.statusCode = 422;
-        throw err;
-    }
+  if (!(await repository.existsForMonth(month))) {
+    throw unprocessable(
+      `No ${label} entries found for ${month}. Add ${label} data for ${month} first.`,
+    );
+  }
 }
 
 export async function requireMonthAbsent(
-    model: MonthModel,
-    month: string,
-    label: string,
+  repository: MonthAwareRepository,
+  month: string,
+  label: string,
 ): Promise<void> {
-    const exists = await model.findFirst({ where: { monthBelongs: month } });
-    if (exists) {
-        const err: any = new Error(
-            `${label} entries already exist for ${month}. Delete those first before removing this entry.`
-        );
-        err.statusCode = 422;
-        throw err;
-    }
+  if (await repository.existsForMonth(month)) {
+    throw unprocessable(
+      `${label} entries already exist for ${month}. Delete those first before removing this entry.`,
+    );
+  }
 }

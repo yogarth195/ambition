@@ -1,27 +1,8 @@
-import prisma from '../prisma/client';
-import { CreateQuantityInput } from '../schemas/quantity.schema';
-import { buildQueryArgs, QueryParams } from '../lib/queryHelpers';
+import { Prisma, Quantity } from '@prisma/client';
+import { quantityRepository } from '../repositories/quantity.repository';
+import { createCrudService } from './base.service';
 
-export class QuantityService {
-  async create(data: CreateQuantityInput) {
-    return prisma.quantity.create({ data });
-  }
-
-  async getAll(params: QueryParams = {}) {
-    return prisma.quantity.findMany(buildQueryArgs(params));
-  }
-
-  async getById(id: string) {
-    return prisma.quantity.findUnique({ where: { id } });
-  }
-
-  async update(id: string, data: any) {
-    return prisma.quantity.update({ where: { id }, data });
-  }
-
-  async delete(id: string) {
-    return prisma.quantity.delete({ where: { id } });
-  }
-}
-
-export const quantityService = new QuantityService();
+export const quantityService = createCrudService<Quantity, Prisma.QuantityUncheckedCreateInput>(
+  quantityRepository,
+  'Quantity',
+);

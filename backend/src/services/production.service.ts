@@ -1,29 +1,20 @@
-import prisma from '../prisma/client';
-import { CreateProductionInput } from '../schemas/production.schema';
-import { buildQueryArgs, QueryParams } from '../lib/queryHelpers';
+import { Prisma, Production } from '@prisma/client';
 import { prevMonth, requireMonthExists } from '../lib/monthGuards';
+import { productionRepository } from '../repositories/production.repository';
+import { CreateProductionInput } from '../schemas/production.schema';
+import { createCrudService } from './base.service';
 
-export class ProductionService {
+const base = createCrudService<Production, Prisma.ProductionUncheckedCreateInput>(
+  productionRepository,
+  'Production',
+);
+
+export const productionService = {
+  ...base,
+
+  /** Months must be filled in order — the previous month has to exist first. */
   async create(data: CreateProductionInput) {
-    await requireMonthExists(prisma.production, prevMonth(data.monthBelongs), 'Production');
-    return prisma.production.create({ data });
-  }
-
-  async getAll(params: QueryParams = {}) {
-    return prisma.production.findMany(buildQueryArgs(params));
-  }
-
-  async getById(id: string) {
-    return prisma.production.findUnique({ where: { id } });
-  }
-
-  async update(id: string, data: any) {
-    return prisma.production.update({ where: { id }, data });
-  }
-
-  async delete(id: string) {
-    return prisma.production.delete({ where: { id } });
-  }
-}
-
-export const productionService = new ProductionService();
+    await requireMonthExists(productionRepository, prevMonth(data.monthBelongs), 'Production');
+    return base.create(data);
+  },
+};

@@ -28,7 +28,9 @@ const App: React.FC = () => (
         <Route
           path="/"
           element={
-            <AppLayout />
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
           }
         >
           <Route index element={<Navigate to="/dashboard" replace />} />

@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { productionController } from '../controllers/production.controller';
+import { createProductionSchema } from '../schemas/production.schema';
+import { productionService } from '../services/production.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/',     productionController.create);
-router.get('/',      productionController.getAll);
-router.get('/:id',   productionController.getById);
-router.put('/:id',   productionController.update);
-router.delete('/:id', productionController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      productionService,
+  createSchema: createProductionSchema,
+});

@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { trimmerController } from '../controllers/trimmer.controller';
+import { createTrimmerSchema } from '../schemas/trimmer.schema';
+import { trimmerService } from '../services/trimmer.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/',     trimmerController.create);
-router.get('/',      trimmerController.getAll);
-router.get('/:id',   trimmerController.getById);
-router.put('/:id',   trimmerController.update);
-router.delete('/:id', trimmerController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      trimmerService,
+  createSchema: createTrimmerSchema,
+});

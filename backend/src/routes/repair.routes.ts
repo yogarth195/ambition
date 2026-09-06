@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { repairController } from '../controllers/repair.controller';
+import { createRepairSchema } from '../schemas/repair.schema';
+import { repairService } from '../services/repair.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/',     repairController.create);
-router.get('/',      repairController.getAll);
-router.get('/:id',   repairController.getById);
-router.put('/:id',   repairController.update);
-router.delete('/:id', repairController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      repairService,
+  createSchema: createRepairSchema,
+});

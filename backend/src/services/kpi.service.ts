@@ -1,14 +1,14 @@
-import prisma from '../prisma/client';
+import { DateRange, kpiRepository } from '../repositories/kpi.repository';
 
 type Period = 'today' | 'week' | 'month' | 'all';
 
-export interface KpiParams {
-  period?: Period;
-  startDate?: string; // YYYY-MM-DD
-  endDate?: string;   // YYYY-MM-DD
-}
+export const VALID_PERIODS: Period[] = ['today', 'week', 'month', 'all'];
 
-interface DateRange { start: Date; end: Date }
+export interface KpiParams {
+  period?:    Period;
+  startDate?: string; // YYYY-MM-DD
+  endDate?:   string; // YYYY-MM-DD
+}
 
 function getRanges(period: Period): { current: DateRange; prev: DateRange } {
   const now = new Date();
@@ -50,8 +50,8 @@ function resolveRanges(params: KpiParams): { current: DateRange; prev: DateRange
 
     // Previous period = same duration immediately before start
     const durationMs = end.getTime() - start.getTime();
-    const prevEnd   = new Date(start.getTime() - 1);
-    const prevStart = new Date(prevEnd.getTime() - durationMs);
+    const prevEnd    = new Date(start.getTime() - 1);
+    const prevStart  = new Date(prevEnd.getTime() - durationMs);
 
     return { current: { start, end }, prev: { start: prevStart, end: prevEnd } };
   }
@@ -63,114 +63,55 @@ function trend(current: number, previous: number): number {
   return Math.round(((current - previous) / previous) * 100);
 }
 
-function where(range: DateRange) {
-  return { date: { gte: range.start, lte: range.end } };
+/** Percentage to one decimal place, guarding against divide-by-zero. */
+function ratio(numerator: number, denominator: number): number {
+  if (denominator <= 0) return 0;
+  return Math.round((numerator / denominator) * 1000) / 10;
 }
 
-export class KpiService {
+export const kpiService = {
   async getSummary(params: KpiParams = {}) {
     const { current, prev } = resolveRanges(params);
+    const agg = await kpiRepository.getSummaryAggregates(current, prev);
 
-    const [
-      prodAgg, prevProdAgg,
-      prodByDesign,
-      trimmerAgg, buffingAgg, repairAgg,
-      packedAgg, packedByItem,
-      saleAgg, saleByItem,
-      quantityAgg,
-      labourAgg, prevLabourAgg,
-      miscAgg, prevMiscAgg,
-    ] = await Promise.all([
-      prisma.production.aggregate({ where: where(current), _sum: { total: true } }),
-      prisma.production.aggregate({ where: where(prev),    _sum: { total: true } }),
-
-      prisma.production.groupBy({
-        by: ['design'],
-        where: where(current),
-        _sum: { total: true },
-        orderBy: { _sum: { total: 'desc' } },
-        take: 5,
-      }),
-
-      prisma.trimmer.aggregate({ where: where(current), _sum: { value: true } }),
-      prisma.buffing.aggregate({ where: where(current), _sum: { value: true } }),
-      prisma.repair.aggregate({ where: where(current), _sum: { value: true } }),
-
-      prisma.packed.aggregate({ where: where(current), _sum: { value: true } }),
-      prisma.packed.groupBy({
-        by: ['item'],
-        where: where(current),
-        _sum: { value: true },
-        orderBy: { _sum: { value: 'desc' } },
-      }),
-
-      prisma.sale.aggregate({ where: where(current), _sum: { value: true } }),
-      prisma.sale.groupBy({
-        by: ['item'],
-        where: where(current),
-        _sum: { value: true },
-        orderBy: { _sum: { value: 'desc' } },
-      }),
-
-      prisma.quantity.aggregate({ where: where(current), _sum: { value: true } }),
-
-      prisma.labour.aggregate({ where: where(current), _sum: { value: true } }),
-      prisma.labour.aggregate({ where: where(prev),    _sum: { value: true } }),
-      prisma.misc.aggregate({ where: where(current), _sum: { value: true } }),
-      prisma.misc.aggregate({ where: where(prev),    _sum: { value: true } }),
-    ]);
-
-    const productionTotal     = prodAgg._sum.total       ?? 0;
-    const prevProductionTotal = prevProdAgg._sum.total   ?? 0;
-    const repairTotal         = repairAgg._sum.value     ?? 0;
-    const trimmerTotal        = trimmerAgg._sum.value    ?? 0;
-    const buffingTotal        = buffingAgg._sum.value    ?? 0;
-    const packedTotal         = packedAgg._sum.value     ?? 0;
-    const salesTotal          = saleAgg._sum.value       ?? 0;
-    const evaTotal            = quantityAgg._sum.value   ?? 0;
-    const labourTotal         = labourAgg._sum.value     ?? 0;
-    const prevLabourTotal     = prevLabourAgg._sum.value ?? 0;
-    const miscTotal           = miscAgg._sum.value       ?? 0;
-    const prevMiscTotal       = prevMiscAgg._sum.value   ?? 0;
-    const expenseTotal        = labourTotal + miscTotal;
-    const prevExpenseTotal    = prevLabourTotal + prevMiscTotal;
+    const expenseTotal     = agg.labourTotal + agg.miscTotal;
+    const prevExpenseTotal = agg.prevLabourTotal + agg.prevMiscTotal;
+    const topArticle       = agg.productionByDesign[0] ?? null;
 
     return {
       dateRange: { start: current.start, end: current.end },
       production: {
-        total:      productionTotal,
-        trend:      trend(productionTotal, prevProductionTotal),
-        topArticle: prodByDesign[0]
-          ? { design: prodByDesign[0].design, total: prodByDesign[0]._sum.total ?? 0 }
-          : null,
-        byDesign: prodByDesign.map(r => ({ design: r.design, total: r._sum.total ?? 0 })),
+        total:      agg.productionTotal,
+        trend:      trend(agg.productionTotal, agg.prevProductionTotal),
+        topArticle,
+        byDesign:   agg.productionByDesign,
       },
       quality: {
-        repairTotal,
-        repairRate:   productionTotal > 0 ? Math.round((repairTotal / productionTotal) * 1000) / 10 : 0,
-        trimmerTotal,
-        buffingTotal,
+        repairTotal:  agg.repairTotal,
+        repairRate:   ratio(agg.repairTotal, agg.productionTotal),
+        trimmerTotal: agg.trimmerTotal,
+        buffingTotal: agg.buffingTotal,
       },
       packing: {
-        total: packedTotal,
-        packedVsProduced: productionTotal > 0 ? Math.round((packedTotal / productionTotal) * 1000) / 10 : 0,
-        byItem: packedByItem.map(r => ({ item: r.item, value: r._sum.value ?? 0 })),
+        total:            agg.packedTotal,
+        packedVsProduced: ratio(agg.packedTotal, agg.productionTotal),
+        byItem:           agg.packedByItem,
       },
       sales: {
-        total: salesTotal,
-        dispatchRate: packedTotal > 0 ? Math.round((salesTotal / packedTotal) * 1000) / 10 : 0,
-        byItem: saleByItem.map(r => ({ item: r.item, value: r._sum.value ?? 0 })),
+        total:        agg.salesTotal,
+        dispatchRate: ratio(agg.salesTotal, agg.packedTotal),
+        byItem:       agg.salesByItem,
       },
-      material: { evaTotal },
+      material: { evaTotal: agg.evaTotal },
       expenses: {
-        labour:      labourTotal,
-        misc:        miscTotal,
+        labour:      agg.labourTotal,
+        misc:        agg.miscTotal,
         total:       expenseTotal,
-        costPerPair: productionTotal > 0 ? Math.round((expenseTotal / productionTotal) * 100) / 100 : 0,
+        costPerPair: agg.productionTotal > 0
+          ? Math.round((expenseTotal / agg.productionTotal) * 100) / 100
+          : 0,
         trend:       trend(expenseTotal, prevExpenseTotal),
       },
     };
-  }
-}
-
-export const kpiService = new KpiService();
+  },
+};

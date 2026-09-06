@@ -1,12 +1,8 @@
-import { Router } from 'express';
-import { packedController } from '../controllers/packed.controller';
+import { createPackedSchema } from '../schemas/packed.schema';
+import { packedService } from '../services/packed.service';
+import { createCrudRouter } from './crudRouter';
 
-const router = Router();
-
-router.post('/',     packedController.create);
-router.get('/',      packedController.getAll);
-router.get('/:id',   packedController.getById);
-router.put('/:id',   packedController.update);
-router.delete('/:id', packedController.delete);
-
-export default router;
+export default createCrudRouter({
+  service:      packedService,
+  createSchema: createPackedSchema,
+});
