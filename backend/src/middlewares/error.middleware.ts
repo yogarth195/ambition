@@ -47,11 +47,14 @@ function normalize(error: unknown): NormalizedError {
  * Single place where an error becomes an HTTP response. Every layer below just
  * throws — AppError for expected failures, anything else for genuine bugs.
  */
-export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   const { status, message, errors } = normalize(error);
 
+  const summary = `[${status}] ${req.method} ${req.originalUrl} — ${message}`;
   if (status >= 500) {
-    console.error('[error]', error);
+    console.error(summary, '\n', error);
+  } else {
+    console.warn(summary, errors ? JSON.stringify(errors) : '');
   }
 
   res.status(status).json({

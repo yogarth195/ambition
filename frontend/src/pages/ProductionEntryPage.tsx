@@ -57,6 +57,7 @@ export const ProductionEntryPage: React.FC = () => {
     setTableLoading(true);
     try {
       const res = await productionApi.getAll(month ? { monthBelongs: month } : undefined);
+      console.log("res: ", res);
       setSavedData(res.data ?? []);
     } catch (err) { console.error(err); }
     finally { setTableLoading(false); }

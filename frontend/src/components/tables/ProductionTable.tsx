@@ -27,6 +27,7 @@ export const ProductionTable: React.FC<Props> = ({ refreshKey }) => {
       setLoading(true);
       try {
         const res = await productionApi.getAll(month ? { monthBelongs: month } : undefined);
+        console.log("res: ", res);
         setData(res.data ?? []);
       } catch (err) { console.error(err); }
       finally { setLoading(false); }

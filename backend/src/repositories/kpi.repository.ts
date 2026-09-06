@@ -1,4 +1,5 @@
 import prisma from '../prisma/client';
+import { KpiGranularity, KpiTableKey } from '../schemas/kpi.schema';
 
 export interface DateRange {
   start: Date;
@@ -9,11 +10,102 @@ function where(range: DateRange) {
   return { entryDate: { gte: range.start, lte: range.end } };
 }
 
+interface SeriesRow {
+  entryDate:    Date;
+  monthBelongs: string | null;
+  value:        number;
+}
+
+/**
+ * month/year grouping must key off `monthBelongs` (the app's authoritative
+ * reporting period), not `entryDate` (just "when someone typed it in") — a
+ * row entered on 2026-06-12 for monthBelongs "2026-01" belongs under January,
+ * not June. Filtering by the same field it's grouped by keeps both sides
+ * consistent. Only `day` granularity, and tables with no monthBelongs column
+ * (Sale), fall back to entryDate.
+ */
+function whereFor(range: DateRange, granularity: KpiGranularity, hasMonthBelongs: boolean) {
+  if (granularity === 'day' || !hasMonthBelongs) return where(range);
+  return {
+    monthBelongs: {
+      gte: range.start.toISOString().slice(0, 7),
+      lte: range.end.toISOString().slice(0, 7),
+    },
+  };
+}
+
+/**
+ * One query per table, normalized to the same { entryDate, monthBelongs,
+ * value } shape regardless of what the underlying column is called
+ * (total/value/amount). This is what lets the series endpoint below treat
+ * every table identically.
+ */
+const SERIES_QUERIES: Record<KpiTableKey, (range: DateRange, granularity: KpiGranularity) => Promise<SeriesRow[]>> = {
+  production: async (range, granularity) =>
+    (await prisma.production.findMany({
+      where:  whereFor(range, granularity, true),
+      select: { entryDate: true, monthBelongs: true, total: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: r.monthBelongs, value: r.total })),
+
+  trimmer: async (range, granularity) =>
+    (await prisma.trimmer.findMany({
+      where:  whereFor(range, granularity, true),
+      select: { entryDate: true, monthBelongs: true, value: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: r.monthBelongs, value: r.value })),
+
+  buffing: async (range, granularity) =>
+    (await prisma.buffing.findMany({
+      where:  whereFor(range, granularity, true),
+      select: { entryDate: true, monthBelongs: true, value: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: r.monthBelongs, value: r.value })),
+
+  repair: async (range, granularity) =>
+    (await prisma.repair.findMany({
+      where:  whereFor(range, granularity, true),
+      select: { entryDate: true, monthBelongs: true, value: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: r.monthBelongs, value: r.value })),
+
+  packed: async (range, granularity) =>
+    (await prisma.packed.findMany({
+      where:  whereFor(range, granularity, true),
+      select: { entryDate: true, monthBelongs: true, value: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: r.monthBelongs, value: r.value })),
+
+  quantity: async (range, granularity) =>
+    (await prisma.quantity.findMany({
+      where:  whereFor(range, granularity, true),
+      select: { entryDate: true, monthBelongs: true, value: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: r.monthBelongs, value: r.value })),
+
+  labour: async (range, granularity) =>
+    (await prisma.labour.findMany({
+      where:  whereFor(range, granularity, true),
+      select: { entryDate: true, monthBelongs: true, amount: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: r.monthBelongs, value: r.amount })),
+
+  misc: async (range, granularity) =>
+    (await prisma.misc.findMany({
+      where:  whereFor(range, granularity, true),
+      select: { entryDate: true, monthBelongs: true, amount: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: r.monthBelongs, value: r.amount })),
+
+  // Sale has no monthBelongs column — always entryDate-based, regardless of granularity.
+  sale: async (range) =>
+    (await prisma.sale.findMany({
+      where:  where(range),
+      select: { entryDate: true, value: true },
+    })).map(r => ({ entryDate: r.entryDate, monthBelongs: null, value: r.value })),
+};
+
 /**
  * Every aggregate the KPI summary needs, fetched in one round trip. The service
  * owns the arithmetic; this layer only owns the queries.
  */
 export const kpiRepository = {
+  getTableSeries(table: KpiTableKey, range: DateRange, granularity: KpiGranularity): Promise<SeriesRow[]> {
+    return SERIES_QUERIES[table](range, granularity);
+  },
+
   async getSummaryAggregates(current: DateRange, prev: DateRange) {
     const [
       prodAgg, prevProdAgg,

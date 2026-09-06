@@ -54,7 +54,7 @@ export const TrimmerForm: React.FC<Props> = ({ onSuccess }) => {
         <label className={LABEL}>Last Month Remaining</label>
         <input type="number" min={0} value={form.lastMonthRemaining} onChange={set('lastMonthRemaining')} placeholder="0" required className={INPUT} />
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <div className="flex-1">
           <label className={LABEL}>Entry Date</label>
           <input type="date" value={form.date} onChange={set('date')} required className={INPUT} />
