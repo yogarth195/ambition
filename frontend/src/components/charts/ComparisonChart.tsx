@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { BarChart3, LineChart as LineChartIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { cn } from '@/lib/utils';
 import {
   KPI_SERIES_TABLES, KpiGranularity, KpiSeriesRow, KpiSeriesTable, kpiSeriesApi,
@@ -316,77 +317,91 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
           Select at least one metric to compare.
         </div>
       ) : loading && !data ? (
-        <div className="flex h-80 items-center justify-center text-sm text-gray-400">Loading…</div>
+        <div className="flex h-80 items-center justify-center">
+          <LoadingSpinner size="md" label="Loading comparison data…" />
+        </div>
       ) : error ? (
         <div className="flex h-80 items-center justify-center text-sm text-red-500">{error}</div>
       ) : !data || data.length === 0 ? (
         <div className="flex h-80 items-center justify-center text-sm text-gray-400">No data for this range.</div>
-      ) : showTable ? (
-        <TableView data={data} tables={selectedTables} />
       ) : (
-        <ResponsiveContainer width="100%" height={340}>
-          {chartType === 'bar' ? (
-            <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }} barGap={2} barCategoryGap="20%">
-              <CartesianGrid stroke="#e1e0d9" vertical={false} />
-              <XAxis
-                dataKey="period"
-                tick={{ fill: '#898781', fontSize: 11 }}
-                axisLine={{ stroke: '#c3c2b7' }}
-                tickLine={false}
-              />
-              <YAxis tick={{ fill: '#898781', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
-              <Tooltip content={<ComparisonTooltip tables={selectedTables} />} cursor={{ fill: '#f9f9f7' }} />
-              {selectedTables.length > 1 && (
-                <Legend
-                  iconType="rect"
-                  wrapperStyle={{ fontSize: 12, color: '#52514e', paddingTop: 12 }}
-                  formatter={(value: string) => TABLE_META[value as KpiSeriesTable]?.label ?? value}
-                />
-              )}
-              {selectedTables.map(table => (
-                <Bar
-                  key={table}
-                  dataKey={table}
-                  name={table}
-                  fill={TABLE_META[table].color}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={24}
-                />
-              ))}
-            </BarChart>
-          ) : (
-            <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-              <CartesianGrid stroke="#e1e0d9" vertical={false} />
-              <XAxis
-                dataKey="period"
-                tick={{ fill: '#898781', fontSize: 11 }}
-                axisLine={{ stroke: '#c3c2b7' }}
-                tickLine={false}
-              />
-              <YAxis tick={{ fill: '#898781', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
-              <Tooltip content={<ComparisonTooltip tables={selectedTables} />} />
-              {selectedTables.length > 1 && (
-                <Legend
-                  iconType="line"
-                  wrapperStyle={{ fontSize: 12, color: '#52514e', paddingTop: 12 }}
-                  formatter={(value: string) => TABLE_META[value as KpiSeriesTable]?.label ?? value}
-                />
-              )}
-              {selectedTables.map(table => (
-                <Line
-                  key={table}
-                  type="monotone"
-                  dataKey={table}
-                  name={table}
-                  stroke={TABLE_META[table].color}
-                  strokeWidth={2}
-                  dot={{ r: 4, fill: TABLE_META[table].color, stroke: '#fcfcfb', strokeWidth: 2 }}
-                  activeDot={{ r: 6, stroke: '#fcfcfb', strokeWidth: 2 }}
-                />
-              ))}
-            </LineChart>
+        <div className="relative">
+          {/* Refetch (granularity/table toggle) keeps the previous render visible, dimmed, with a spinner overlay — no flash, no layout jump. */}
+          {loading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60">
+              <LoadingSpinner size="sm" />
+            </div>
           )}
-        </ResponsiveContainer>
+          <div className={cn('transition-opacity duration-150', loading && 'pointer-events-none opacity-50')}>
+            {showTable ? (
+              <TableView data={data} tables={selectedTables} />
+            ) : (
+              <ResponsiveContainer width="100%" height={340}>
+                {chartType === 'bar' ? (
+                  <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }} barGap={2} barCategoryGap="20%">
+                    <CartesianGrid stroke="#e1e0d9" vertical={false} />
+                    <XAxis
+                      dataKey="period"
+                      tick={{ fill: '#898781', fontSize: 11 }}
+                      axisLine={{ stroke: '#c3c2b7' }}
+                      tickLine={false}
+                    />
+                    <YAxis tick={{ fill: '#898781', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
+                    <Tooltip content={<ComparisonTooltip tables={selectedTables} />} cursor={{ fill: '#f9f9f7' }} />
+                    {selectedTables.length > 1 && (
+                      <Legend
+                        iconType="rect"
+                        wrapperStyle={{ fontSize: 12, color: '#52514e', paddingTop: 12 }}
+                        formatter={(value: string) => TABLE_META[value as KpiSeriesTable]?.label ?? value}
+                      />
+                    )}
+                    {selectedTables.map(table => (
+                      <Bar
+                        key={table}
+                        dataKey={table}
+                        name={table}
+                        fill={TABLE_META[table].color}
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={24}
+                      />
+                    ))}
+                  </BarChart>
+                ) : (
+                  <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                    <CartesianGrid stroke="#e1e0d9" vertical={false} />
+                    <XAxis
+                      dataKey="period"
+                      tick={{ fill: '#898781', fontSize: 11 }}
+                      axisLine={{ stroke: '#c3c2b7' }}
+                      tickLine={false}
+                    />
+                    <YAxis tick={{ fill: '#898781', fontSize: 11 }} axisLine={false} tickLine={false} width={48} />
+                    <Tooltip content={<ComparisonTooltip tables={selectedTables} />} />
+                    {selectedTables.length > 1 && (
+                      <Legend
+                        iconType="line"
+                        wrapperStyle={{ fontSize: 12, color: '#52514e', paddingTop: 12 }}
+                        formatter={(value: string) => TABLE_META[value as KpiSeriesTable]?.label ?? value}
+                      />
+                    )}
+                    {selectedTables.map(table => (
+                      <Line
+                        key={table}
+                        type="monotone"
+                        dataKey={table}
+                        name={table}
+                        stroke={TABLE_META[table].color}
+                        strokeWidth={2}
+                        dot={{ r: 4, fill: TABLE_META[table].color, stroke: '#fcfcfb', strokeWidth: 2 }}
+                        activeDot={{ r: 6, stroke: '#fcfcfb', strokeWidth: 2 }}
+                      />
+                    ))}
+                  </LineChart>
+                )}
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
