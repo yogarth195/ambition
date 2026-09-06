@@ -1,16 +1,10 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Eye, EyeOff, BarChart3, ShieldCheck, Layers } from 'lucide-react';
+import { Eye, EyeOff, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/services/auth.service';
 import { Button } from '@/components/ui/Button';
 import bgImage from '../5324c8eNike-IB7110-002_1.avif';
-
-const features = [
-  { icon: BarChart3, text: 'Monthly production tracking across all operations' },
-  { icon: Layers, text: 'Financial year reporting with live totals' },
-  { icon: ShieldCheck, text: 'Role-based access for your entire team' },
-];
 
 export const LoginPage: React.FC = () => {
   const { login, isAuthenticated } = useAuth();
@@ -98,7 +92,7 @@ export const LoginPage: React.FC = () => {
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-gray-700">Email address</label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@company.com"

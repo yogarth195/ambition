@@ -9,7 +9,7 @@ const LABEL = 'block text-[11px] font-semibold text-gray-500 uppercase tracking-
 interface Props { onSuccess?: () => void; }
 
 export const BuffingForm: React.FC<Props> = ({ onSuccess }) => {
-  const [form, setForm] = useState({ item: '', value: '', date: today });
+  const [form, setForm] = useState({ item: '', value: '', date: today, lastMonthRemaining: '' });
   const [loading, setLoading] = useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -22,9 +22,11 @@ export const BuffingForm: React.FC<Props> = ({ onSuccess }) => {
       await apiClient.buffing.create({
         item: form.item,
         value: parseInt(form.value, 10),
-        date: new Date(form.date).toISOString(),
+        entryDate: new Date(form.date).toISOString(),
+        monthBelongs: form.date.slice(0, 7),
+        lastMonthRemaining: parseInt(form.lastMonthRemaining, 10) || 0,
       });
-      setForm({ item: '', value: '', date: today });
+      setForm({ item: '', value: '', date: today, lastMonthRemaining: '' });
       onSuccess?.();
     } catch (err) {
       console.error('BuffingForm:', err);
@@ -42,6 +44,10 @@ export const BuffingForm: React.FC<Props> = ({ onSuccess }) => {
       <div>
         <label className={LABEL}>Value</label>
         <input type="number" min={0} value={form.value} onChange={set('value')} placeholder="0" required className={INPUT} />
+      </div>
+      <div>
+        <label className={LABEL}>Last Month Remaining</label>
+        <input type="number" min={0} value={form.lastMonthRemaining} onChange={set('lastMonthRemaining')} placeholder="0" required className={INPUT} />
       </div>
       <div>
         <label className={LABEL}>Date</label>

@@ -84,7 +84,7 @@ export const ProductionEntryPage: React.FC = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       monthBelongs: currentMonth,
-      rows: [{ design: '', shorts: undefined, shortUnit: 8, entryDate: today }],
+      rows: [{ design: '', shorts: undefined as unknown as number, shortUnit: 8, entryDate: today }],
     },
   });
 
@@ -115,7 +115,7 @@ export const ProductionEntryPage: React.FC = () => {
           total: row.shorts * row.shortUnit,
         });
       }
-      reset({ monthBelongs: currentMonth, rows: [{ design: '', shorts: undefined, shortUnit: 8, entryDate: today }] });
+      reset({ monthBelongs: currentMonth, rows: [{ design: '', shorts: undefined as unknown as number, shortUnit: 8, entryDate: today }] });
       toast.success('Entries saved.');
       await reloadTable(filterMonth);
     } catch (err: any) {
@@ -248,7 +248,7 @@ export const ProductionEntryPage: React.FC = () => {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => append({ design: '', shorts: undefined, shortUnit: 8, entryDate: today })}
+            onClick={() => append({ design: '', shorts: undefined as unknown as number, shortUnit: 8, entryDate: today })}
           >
             <Plus className="h-3.5 w-3.5" />
             Add row

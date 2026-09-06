@@ -17,8 +17,9 @@ export const MiscForm: React.FC<Props> = ({ onSuccess }) => {
     setLoading(true);
     try {
       await apiClient.misc.create({
-        value: parseInt(form.value, 10),
-        date: new Date(form.date).toISOString(),
+        amount: parseInt(form.value, 10),
+        entryDate: new Date(form.date).toISOString(),
+        monthBelongs: form.date.slice(0, 7),
       });
       setForm({ value: '', date: today });
       onSuccess?.();

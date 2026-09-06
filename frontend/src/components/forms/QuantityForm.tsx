@@ -19,7 +19,8 @@ export const QuantityForm: React.FC<Props> = ({ onSuccess }) => {
       await apiClient.quantity.create({
         item: form.item,
         value: parseInt(form.value, 10),
-        date: new Date(form.date).toISOString(),
+        entryDate: new Date(form.date).toISOString(),
+        monthBelongs: form.date.slice(0, 7),
       });
       setForm({ item: '', value: '', date: today });
       onSuccess?.();

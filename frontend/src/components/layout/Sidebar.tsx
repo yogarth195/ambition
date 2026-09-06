@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, FileSpreadsheet, Settings, LogOut, BarChart3, Factory,
-  Scissors, Sparkles, Wrench, Package, Layers, ShoppingCart, Wallet, Receipt,
+  LayoutDashboard, Settings, LogOut, BarChart3, Factory,
+  Scissors, Sparkles, Wrench, Package, Layers,  Wallet, Receipt,
   PanelLeftClose, PanelLeftOpen, HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 const navItems = [
   { to: '/dashboard',  label: 'Dashboard',   icon: LayoutDashboard },
@@ -33,6 +34,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
   const { user, logout } = useAuth();
   const initials = user?.name?.slice(0, 2).toUpperCase() ?? 'U';
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   return (
     <aside
@@ -186,7 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           </div>
         )}
         <button
-          onClick={logout}
+          onClick={() => setShowLogoutConfirm(true)}
           className={cn(
             'w-full mt-1 flex items-center gap-3 py-2 rounded-lg text-[13px] text-slate-500 hover:text-red-400 hover:bg-red-400/5 transition-colors duration-150',
             collapsed ? 'justify-center px-0' : 'px-3'
@@ -197,6 +199,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
           {!collapsed && 'Sign out'}
         </button>
       </div>
+
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={logout}
+        title="Sign out"
+        description="You'll need to log in again to access the dashboard."
+        confirmLabel="Sign out"
+        variant="danger"
+      />
     </aside>
   );
 };

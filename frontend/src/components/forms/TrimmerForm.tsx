@@ -10,7 +10,7 @@ const LABEL = 'block text-[11px] font-semibold text-gray-500 uppercase tracking-
 interface Props { onSuccess?: () => void; }
 
 export const TrimmerForm: React.FC<Props> = ({ onSuccess }) => {
-  const [form, setForm] = useState({ item: '', value: '', date: today , formValue: ''});
+  const [form, setForm] = useState({ item: '', value: '', date: today, formValue: '', lastMonthRemaining: '' });
   const [loading, setLoading] = useState(false);
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -26,9 +26,12 @@ export const TrimmerForm: React.FC<Props> = ({ onSuccess }) => {
       await apiClient.trimmer.create({
         item: form.item,
         value: parseInt(form.value, 10),
-        date: new Date(form.date).toISOString(),
+        entryDate: new Date(form.date).toISOString(),
+        monthBelongs: form.date.slice(0, 7),
+        lastMonthRemaining: parseInt(form.lastMonthRemaining, 10) || 0,
+        forRange: form.formValue || undefined,
       });
-      setForm({ item: '', value: '', date: today, formValue : ''});
+      setForm({ item: '', value: '', date: today, formValue: '', lastMonthRemaining: '' });
       onSuccess?.();
     } catch (err) {
       console.error('TrimmerForm:', err);
@@ -46,6 +49,10 @@ export const TrimmerForm: React.FC<Props> = ({ onSuccess }) => {
       <div>
         <label className={LABEL}>Value</label>
         <input type="number" min={0} value={form.value} onChange={set('value')} placeholder="0" required className={INPUT} />
+      </div>
+      <div>
+        <label className={LABEL}>Last Month Remaining</label>
+        <input type="number" min={0} value={form.lastMonthRemaining} onChange={set('lastMonthRemaining')} placeholder="0" required className={INPUT} />
       </div>
       <div className="flex gap-2">
         <div className="flex-1">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { apiClient } from '@/api/client';
+import { saleApi } from '@/api/sale';
 import { Button } from '@/components/ui/Button';
 
 const today = new Date().toISOString().split('T')[0];
@@ -18,10 +18,10 @@ export const SaleForm: React.FC<Props> = ({ onSuccess }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await apiClient.sale.create({
+      await saleApi.create({
         item: form.item,
         value: parseInt(form.value, 10),
-        date: new Date(form.date).toISOString(),
+        entryDate: new Date(form.date).toISOString(),
       });
       setForm({ item: '', value: '', date: today });
       onSuccess?.();

@@ -7,7 +7,6 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/pages/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { DashboardPage } from '@/pages/DashboardPage';
-import { ReportPage } from '@/pages/ReportPage';
 import { ProductionEntryPage } from '@/pages/ProductionEntryPage';
 import { TrimmerPage } from '@/pages/TrimmerPage';
 import { BuffingPage } from '@/pages/BuffingPage';
